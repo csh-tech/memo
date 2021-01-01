@@ -9,4 +9,5 @@ Welcome to the memos！
 .. toctree::
    :maxdepth: 2
 
+   复习笔记/index
    面经整理/index
