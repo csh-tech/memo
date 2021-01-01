@@ -10,11 +10,4 @@ Welcome to memo's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-   2020/index
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+   面经整理/index
