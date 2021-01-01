@@ -10,7 +10,7 @@ Welcome to memo's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-
+   2020/index
 
 Indices and tables
 ==================
