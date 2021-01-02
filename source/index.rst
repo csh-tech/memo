@@ -7,7 +7,7 @@ Welcome to the memos！
 =======================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
    复习笔记/index
    面经整理/index

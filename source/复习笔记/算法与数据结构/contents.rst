@@ -3214,8 +3214,11 @@ UnionFind
 
     #endif  // UNION_FIND_
 
-Graph
-========
+Graph (C++)
+================
+
+Unweighted Graph
+------------------
 
 .. code-block:: c++
     :linenos:
@@ -3638,7 +3641,7 @@ Graph
     #endif  // GRAPH_H_
 
 Weighted Graph
-=================
+------------------
 
 .. code-block:: c++
     :linenos:
@@ -4313,3 +4316,2019 @@ Weighted Graph
     // 拓扑排序处理DAG以及求所有节点最短的路径的Floyed算法也可以经过改造用在求最长路径问题
 
     #endif  // WEIGHTED_GRAPH_H_
+
+
+Graph (Java)
+=================
+
+Utils
+---------
+
+Graph
+^^^^^^^^^^^^
+
+.. code-block:: java
+    :linenos:
+
+    import java.io.File;
+    import java.io.IOException;
+    import java.util.Scanner;
+    import java.util.TreeSet;
+
+    // 无权图(支持有向、无向)
+    @SuppressWarnings("unchecked")
+    class Graph {
+      private int V;
+      private int E;
+      private TreeSet<Integer>[] adj;
+      private boolean directed;
+      private int[] indegrees, outdegrees;  
+
+      public Graph(String filename, boolean directed) {
+        this.directed = directed;
+    
+        File file = new File(filename);
+        try (Scanner scanner = new Scanner(file)) {
+          V = scanner.nextInt();
+          if (V < 0) throw new IllegalArgumentException("V >= 0 is required");
+          adj = new TreeSet[V];  
+          for (int i = 0; i < V; i++) {
+            adj[i] = new TreeSet<Integer>();
+          }
+
+          indegrees = new int[V];
+          outdegrees = new int[V];           
+      
+          E = scanner.nextInt();
+          if (E < 0) throw new IllegalArgumentException("E >= 0 is required");
+          for (int i = 0; i < E; i++) {
+            int a = scanner.nextInt();
+            validateVertex(a);
+            int b = scanner.nextInt();
+            validateVertex(b);
+
+            if (a == b) throw new IllegalArgumentException("Self Loop is detected");
+            if (adj[a].contains(b)) throw new IllegalArgumentException("Parallel Edge is detected");
+        
+            adj[a].add(b);
+            if (directed) {
+              outdegrees[a]++;
+              indegrees[b]++;
+            }
+            if (!directed) {
+              adj[b].add(a);
+            }
+          }
+        }
+        catch (IOException e) {
+          e.printStackTrace();
+        }
+      }
+
+      public Graph(String filename) {  // 默认创建无向图
+        this(filename, false);
+      }
+
+      public boolean isDirected() {
+        return directed;
+      }
+
+      public void validateVertex (int v) {
+        if (v < 0 || v >= V) {
+          throw new IllegalArgumentException("vertex " + v + " is invalid");
+        }
+      }
+
+      public int V() { return V; }
+  
+      public int E() { return E; }
+
+      public boolean hasEdge(int v, int w) {
+        validateVertex(v);
+        validateVertex(w);
+        return adj[v].contains(w);
+      }
+
+      public Iterable<Integer> adj(int v) {
+        validateVertex(v);
+        return adj[v];
+      }
+
+      public int degree(int v) {
+        if (directed) {
+          throw new RuntimeException("degree only works in undirected graph");
+        }
+        validateVertex(v);
+        return adj[v].size();
+      }
+
+      public int indegree(int v) {
+        if (!directed) {
+          throw new RuntimeException("indegree only works in undirected graph");
+        }
+        validateVertex(v);
+        return indegrees[v];
+      }
+
+      public int outdegree(int v) {
+        if (!directed) {
+          throw new RuntimeException("outdegree only works in undirected graph");
+        }
+        validateVertex(v);
+        return outdegrees[v];
+      }
+
+      @Override
+      public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(String.format("V = %d, E = %d, directed = %b\n", V, E, directed));
+        for (int v = 0; v < V; v++) {
+          sb.append(String.format("%d: ", v));
+          for (int w : adj[v]) {
+            sb.append(String.format("%d ", w));
+          }
+          sb.append("\n");
+        }
+
+        return sb.toString();
+      }
+
+      public static void main(String[] args) {
+        Graph graph1 = new Graph("../data/g1.txt");
+        System.out.println(graph1);
+
+        Graph graph2 = new Graph("../data/g1.txt", true);
+        System.out.println(graph2);
+
+        System.out.println("degree test: ");
+        for (int v = 0; v < graph2.V(); v++) {
+          System.out.println(graph2.indegree(v) + " " + graph2.outdegree(v));
+        }
+      }
+    }
+
+WeightedEdge
+^^^^^^^^^^^^^^^
+
+.. code-block:: java
+    :linenos:
+
+    public class WeightedEdge implements Comparable<WeightedEdge> {
+      private int v, w, weight;
+  
+      public WeightedEdge(int v, int w, int weight) {
+        this.v = v;
+        this.w = w;
+        this.weight = weight;
+      }
+  
+      public int getV() {
+        return v;
+      }
+
+      public int getW() {
+        return w;
+      }
+
+      public int getWeight() {
+        return weight;
+      }
+
+      @Override
+      public int compareTo(WeightedEdge that) {
+        return this.weight - that.weight;
+      }
+
+      @Override
+      public String toString() {
+        return String.format("%d-%d: %d", v, w, weight);
+      }
+    }
+
+WeightedGraph
+^^^^^^^^^^^^^^^^^
+
+.. code-block:: java
+    :linenos:
+
+    import java.io.File;
+    import java.io.IOException;
+    import java.util.Scanner;
+    import java.util.TreeMap;
+    import java.util.Map;
+
+    // 有权图(支持有向、无向)
+    @SuppressWarnings("unchecked")
+    class WeightedGraph {
+      private int V;
+      private int E;
+      private TreeMap<Integer, Integer>[] adj;
+      private boolean directed;
+
+      public WeightedGraph(String filename, boolean directed) {
+        this.directed = directed;
+        File file = new File(filename);
+        try (Scanner scanner = new Scanner(file)) {
+          V = scanner.nextInt();
+          if (V < 0) throw new IllegalArgumentException("V >= 0 is required");
+          adj = new TreeMap[V];
+          for (int i = 0; i < V; i++) {
+            adj[i] = new TreeMap<Integer, Integer>();
+          }
+      
+          E = scanner.nextInt();
+          if (E < 0) throw new IllegalArgumentException("E >= 0 is required");
+          for (int i = 0; i < E; i++) {
+            int a = scanner.nextInt();
+            validateVertex(a);
+            int b = scanner.nextInt();
+            validateVertex(b);
+            int weight = scanner.nextInt();
+
+            if (a == b) throw new IllegalArgumentException("Self Loop is detected");
+            // 如果入到平行边，直接抛出异常
+            // 但是如果在面试中遇到了平行边问题的话，直接保留平行边中的最短/长(根据题意)的边即可
+            if (adj[a].containsKey(b)) throw new IllegalArgumentException("Parallel Edge is detected");
+        
+            adj[a].put(b, weight);
+            if (!directed) {
+              adj[b].put(a, weight);
+            }
+          }
+        }
+        catch (IOException e) {
+          e.printStackTrace();
+        }
+      }
+
+      public WeightedGraph(String filename) {
+        this(filename, false);
+      }
+
+      public boolean isDirected() {
+        return directed;
+      }
+
+      public void validateVertex (int v) {
+        if (v < 0 || v >= V) {
+          throw new IllegalArgumentException("vertex " + v + " is invalid");
+        }
+      }
+
+      public int V() { return V; }
+  
+      public int E() { return E; }
+
+      public boolean hasEdge(int v, int w) {
+        validateVertex(v);
+        validateVertex(w);
+        return adj[v].containsKey(w);
+      }
+
+      public Iterable<Integer> adj(int v) {
+        validateVertex(v);
+        return adj[v].keySet();  // 好用
+      }
+
+      public int getWeight(int v, int w) {
+        if (hasEdge(v, w)) {
+          return adj[v].get(w);
+        }
+        throw new IllegalArgumentException(String.format("No edge %d-%d", v, w));
+      }
+
+      // public int degree(int v) {
+      //   validateVertex(v);
+      //   return adj[v].size();
+      // }
+
+      @Override
+      public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(String.format("V = %d, E = %d, directed = %b\n", V, E, directed));
+        for (int v = 0; v < V; v++) {
+          sb.append(String.format("%d: ", v));
+          for (Map.Entry<Integer, Integer> entry : adj[v].entrySet()) {  // 遍历tree map
+            sb.append(String.format("(%d: %d) ", entry.getKey(), entry.getValue()));
+          }
+          sb.append("\n");
+        }
+
+        return sb.toString();
+      }
+
+      public static void main(String[] args) {
+        WeightedGraph wgraph1 = new WeightedGraph("../data/g7.txt");
+        System.out.println(wgraph1);
+
+        WeightedGraph wgraph2 = new WeightedGraph("../data/g7.txt", true);
+        System.out.println(wgraph2);
+      }
+    }
+
+
+
+WCC
+^^^^^
+
+.. code-block:: java
+    :linenos:
+
+    import java.util.ArrayList;
+
+    // 求带权图的联通分量(Weighted Connected Component)
+    // 这个类是在无向无权图的CC类的基础上改的，适应Kruscal算法的需要
+    // 只是简单的将Graph改成了WeightedGraph
+    @SuppressWarnings("unchecked")
+    public class WCC {
+      private WeightedGraph G;
+      // 如果只是求解图中存在的联通分量的个数的话，使用boolean类型即可
+      // 但是，此处为了求解每个联通分量中包含的具体定点，使用了int类型
+      // 用不同的int整数表示不同的联通分量
+      private int[] visited;
+      private int cccount = 0;
+
+      // 在进行DFS的过程中统计连通分量
+      public WCC(WeightedGraph G) {
+        this.G = G;
+        visited = new int[G.V()];
+        for (int i = 0; i < visited.length; i++) {
+          visited[i] = -1;
+        }
+        for (int v = 0; v < G.V(); v++) {
+          if (visited[v] == -1) {
+           dfs(v, cccount);  // 用cccount为联通分量编号
+           cccount++;
+          }
+        }
+      }
+
+      private void dfs(int v, int ccid) {
+        visited[v] = ccid;
+        for (int w : G.adj(v)) {
+          if (visited[w] == -1) {
+           dfs(w, ccid);
+          }
+        }
+      }
+
+      public int count() {
+        return cccount;
+      }
+
+      public boolean isConnected(int v, int w) {
+        G.validateVertex(v);
+        G.validateVertex(w);
+        return visited[v] == visited[w];
+      }
+
+      public ArrayList<Integer>[] components() {
+        ArrayList<Integer>[] res = new ArrayList[cccount];
+        for (int i = 0; i < cccount; i++) {
+          res[i] = new ArrayList<Integer>();
+        }
+
+        for (int v = 0; v < G.V(); v++) {
+          res[visited[v]].add(v);
+        }
+
+        return res;
+      }
+    }
+
+UF
+^^^^^
+
+.. code-block:: java
+    :linenos:
+
+    // 并查集 union find
+    public class UF{
+      private int[] parent;
+
+      public UF(int n){
+        parent = new int[n];
+        for(int i = 0 ; i < n ; i ++)
+          parent[i] = i;
+      }
+
+      public int find(int p){
+        if( p != parent[p] )
+          parent[p] = find( parent[p] );
+        return parent[p];
+      }
+
+      public boolean isConnected(int p , int q){
+        return find(p) == find(q);
+      }
+
+      public void unionElements(int p, int q){
+        int pRoot = find(p);
+        int qRoot = find(q);
+
+        if( pRoot == qRoot )
+          return;
+
+        parent[pRoot] = qRoot;
+      }
+    }
+
+BFS
+---------
+
+GraphBFS
+^^^^^^^^^^^^
+
+.. code-block:: java
+    :linenos:
+
+    import java.util.ArrayList;
+    import java.util.Queue;
+    import java.util.LinkedList;
+
+    // 时间复杂度：O(V+E)
+    // 图的广度优先遍历有一个特殊的性质，可以用于解决一类特定的问题，悬念
+    // 答案：用广度优先遍历可以解决最短路径问题，而深度优先遍历不可以
+    // 图的广度优先遍历可以解决前一章深度优先遍历所解决的所有问题
+    public class GraphBFS {
+      private Graph G;
+      private boolean[] visited;
+      private ArrayList<Integer> order = new ArrayList<>();
+
+      GraphBFS(Graph G) {
+        this.G = G;
+        visited = new boolean[G.V()];
+        for (int v = 0; v < G.V(); v++) {
+          if (!visited[v]) {
+            bfs(v);
+          }
+        }
+      }
+
+      private void bfs(int s) {
+        Queue<Integer> queue = new LinkedList<>();
+        queue.add(s);
+        visited[s] = true;
+        while (!queue.isEmpty()) {
+          int v = queue.remove();
+          order.add(v);
+      
+          for (int w : G.adj(v)) {
+            if (!visited[w]) {
+              queue.add(w);
+              visited[w] = true;
+            }
+          }
+        }
+      }
+
+      public Iterable<Integer> order() {
+        return order;
+      }
+
+      public static void main(String[] args) {
+        Graph g1 = new Graph("../data/g5.txt");
+        GraphBFS graphBFS1 = new GraphBFS(g1);
+        System.out.println("undirected graph:");
+        System.out.println("BFS order: " + graphBFS1.order());
+
+        Graph g2 = new Graph("../data/g5.txt", true);
+        GraphBFS graphBFS2 = new GraphBFS(g2);
+        System.out.println("directed graph:");
+        System.out.println("BFS order: " + graphBFS2.order());
+      }
+    }
+
+SingleSourcePathBFS
+^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: java
+    :linenos:
+
+    import java.util.ArrayList;
+    import java.util.Queue;
+    import java.util.LinkedList;
+    import java.util.Collections;
+
+    // 算法面试中的一个坑
+    // 当看到求图中最短路径的时候，第一步应该确定图是有权图还是无权图，对于有权图有特定的
+    // 算法求解，但是对于无权图来说，直接使用广度优先遍历就可以解决，不要想当然的去套有权
+    // 图的各种算法
+
+    // ！！！ 广度优先遍历求最短路径只适用于 无权图 无权图 无权图（重要的事情说三遍）
+
+    public class SingleSourcePathBFS {
+      private Graph G;
+      private int s;
+      private boolean[] visited;
+      private int[] pre;
+
+      SingleSourcePathBFS(Graph G, int s) {
+        this.G = G;
+        this.s = s;
+        visited = new boolean[G.V()];
+        pre = new int[G.V()];
+        for (int i = 0; i < G.V(); i++) {
+          pre[i] = -1;
+        }
+        bfs(s);
+      }
+
+      private void bfs(int s) {
+        Queue<Integer> queue = new LinkedList<>();
+        queue.add(s);
+        visited[s] = true;
+        pre[s] = s;
+        while (!queue.isEmpty()) {
+          int v = queue.remove();
+          for (int w : G.adj(v)) {
+            if (!visited[w]) {
+              queue.add(w);
+              visited[w] = true;
+              pre[w] = v;
+            }
+          }
+        }
+      }
+
+      public boolean isConnectedTo(int t) {
+        G.validateVertex(t);
+        return visited[t];
+      }
+
+      public Iterable<Integer> path(int t) {
+        ArrayList<Integer> res = new ArrayList<>();
+        if (!isConnectedTo(t)) return res;
+
+        int cur = t;
+        while (cur != s) {
+          res.add(cur);
+          cur = pre[cur];
+        }
+        res.add(s);
+        Collections.reverse(res);
+        return res;
+      }
+
+      public static void main(String[] args) {
+        Graph g = new Graph("../data/g2.txt");
+        SingleSourcePathBFS sspath = new SingleSourcePathBFS(g, 0);
+        System.out.println("0 --> 6: " + sspath.path(6));
+        System.out.println("0 --> 5: " + sspath.path(5));
+      }
+    }
+
+    // TODO: 求所有点对路径问题
+    // TODO: 提前返回 
+    // TODO: 求联通分量（个数、具体的连通分量）
+    // TODO: 环检测
+    // TODO: 二分图检测
+
+USSSPath
+^^^^^^^^^^^^^^^
+
+.. code-block:: java
+    :linenos:
+
+    import java.util.ArrayList;
+    import java.util.Queue;
+    import java.util.LinkedList;
+    import java.util.Collections;
+
+    // Unweighted Single Source Shortest Path
+    public class USSSPath {
+      private Graph G;
+      private int s;
+      private boolean[] visited;
+      private int[] pre;
+      private int[] dis;
+
+      USSSPath(Graph G, int s) {
+        this.G = G;
+        this.s = s;
+        visited = new boolean[G.V()];
+        pre = new int[G.V()];
+        dis = new int[G.V()];
+        for (int i = 0; i < G.V(); i++) {
+          pre[i] = -1;
+          dis[i] = -1;
+        }
+        bfs(s);
+        for (int e : dis) {
+          System.out.print(e + " ");
+        }
+        System.out.println();
+      }
+
+      private void bfs(int s) {
+        Queue<Integer> queue = new LinkedList<>();
+        queue.add(s);
+        visited[s] = true;
+        pre[s] = s;
+        dis[s] = 0;
+        while (!queue.isEmpty()) {
+          int v = queue.remove();
+          for (int w : G.adj(v)) {
+            if (!visited[w]) {
+              queue.add(w);
+              visited[w] = true;
+              pre[w] = v;
+              dis[w] = dis[v] + 1;
+            }
+          }
+        }
+      }
+
+      public boolean isConnectedTo(int t) {
+        G.validateVertex(t);
+        return visited[t];
+      }
+
+      public Iterable<Integer> path(int t) {
+        ArrayList<Integer> res = new ArrayList<>();
+        if (!isConnectedTo(t)) return res;
+
+        int cur = t;
+        while (cur != s) {
+          res.add(cur);
+          cur = pre[cur];
+        }
+        res.add(s);
+        Collections.reverse(res);
+        return res;
+      }
+
+      public int distance(int t) {
+        G.validateVertex(t);
+        return dis[t];
+      }
+
+      public static void main(String[] args) {
+        Graph g = new Graph("../data/g2.txt");
+        USSSPath ussspath = new USSSPath(g, 0);
+        System.out.println("0 --> 6: " + ussspath.path(6) + " distance: " + ussspath.distance(6));
+        System.out.println("0 --> 5: " + ussspath.path(5) + " distance: " + ussspath.distance(5));
+      }
+    }
+
+DFS
+---------
+
+GraphDFS
+^^^^^^^^^^^^
+
+.. code-block:: java
+    :linenos:
+
+    import java.util.ArrayList;
+
+    // 图的深度优先遍历(DFS)的应用
+    // (1) 求图的联通分量
+    // (2) 求两点之间是否可达
+    // (3) 求两点间的一条路径
+    // (4) 检测图中是否有环
+    // (5) 二分图的检测
+    // (6) 寻找图中的桥
+    // (7) 寻找图中的割点
+    // (8) 求哈密尔路径
+    // (9) 求图的拓扑排序
+
+    // 时间复杂度 O(V+E)
+    // 一般情况下E相比V都是高阶项
+    // 但是当图中不存在边的时候，时间复杂度为O(V)
+    // 所以整体的时间复杂度必须表示为O(V+E)，而不能表示成O(E)
+
+    public class GraphDFS {
+      private Graph G;
+      private ArrayList<Integer> pre = new ArrayList<>();
+      private ArrayList<Integer> post = new ArrayList<>();
+      private boolean[] visited;
+
+      // 在构造函数中对图进行DFS
+      public GraphDFS(Graph G) {
+        this.G = G;
+        visited = new boolean[G.V()];
+        for (int v = 0; v < G.V(); v++) {  // 这个循环是为了处理非连通图的情况
+         if (!visited[v]) {
+           dfs(v);
+         }
+        }
+      }
+
+      private void dfs(int v) {
+        visited[v] = true;
+        pre.add(v);
+        for (int w : G.adj(v)) {
+         if (!visited[w]) {
+           dfs(w);
+         }
+        }
+        post.add(v);
+      }
+
+      public Iterable<Integer> pre() {
+        return pre;
+      }
+
+      public Iterable<Integer> post() {
+        return post;
+      }
+
+      public static void main(String[] args) {
+        Graph g1 = new Graph("../data/g2.txt");
+        GraphDFS graphDFS1 = new GraphDFS(g1);
+        System.out.println("undirected graph:");
+        System.out.println(graphDFS1.pre());
+        System.out.println(graphDFS1.post());
+
+        Graph g2 = new Graph("../data/g2.txt", true);
+        GraphDFS graphDFS2 = new GraphDFS(g2);
+        System.out.println("directed graph:");
+        System.out.println(graphDFS2.pre());
+        System.out.println(graphDFS2.post());
+      }
+    }
+
+    // 仿照树的先根遍历、后根遍历可以写出图的先根遍历、后根遍历
+    // 但是图没有中根遍历，因为图中无法定义中间节点
+
+    // TODO: 实现图的先序遍历的非递归实现，后序遍历比较难
+    // TODO: 基于邻接矩阵实现深度优先遍历
+
+CC
+^^^^^^^^^^^^
+
+.. code-block:: java
+    :linenos:
+
+    import java.util.ArrayList;
+
+    // 求联通分量(Connected Component)
+    @SuppressWarnings("unchecked")
+    public class CC {
+      private Graph G;
+      // 如果只是求解图中存在的联通分量的个数的话，使用boolean类型即可
+      // 但是，此处为了求解每个联通分量中包含的具体定点，使用了int类型
+      // 用不同的int整数表示不同的联通分量
+      private int[] visited;
+      private int cccount = 0;
+
+      // 在进行DFS的过程中统计连通分量
+      public CC(Graph G) {
+        this.G = G;
+        visited = new int[G.V()];
+        for (int i = 0; i < visited.length; i++) {
+          visited[i] = -1;
+        }
+        for (int v = 0; v < G.V(); v++) {
+          if (visited[v] == -1) {
+            dfs(v, cccount);  // 用cccount为联通分量编号
+            cccount++;
+          }
+        }
+      }
+
+      private void dfs(int v, int ccid) {
+        visited[v] = ccid;
+        for (int w : G.adj(v)) {
+          if (visited[w] == -1) {
+            dfs(w, ccid);
+          }
+        }
+      }
+
+      public int count() {
+        for (int e : visited) {
+          System.out.print(e + " ");
+        }
+        System.out.println();
+        return cccount;
+      }
+
+      public boolean isConnected(int v, int w) {
+        G.validateVertex(v);
+        G.validateVertex(w);
+        return visited[v] == visited[w];
+      }
+
+      public ArrayList<Integer>[] components() {
+        ArrayList<Integer>[] res = new ArrayList[cccount];
+        for (int i = 0; i < cccount; i++) {
+          res[i] = new ArrayList<Integer>();
+        }
+
+        for (int v = 0; v < G.V(); v++) {
+          res[visited[v]].add(v);
+        }
+
+        return res;
+      }
+
+      public static void main(String[] args) {
+        Graph g = new Graph("../data/g2.txt");
+        CC cc = new CC(g);
+    
+        System.out.println(cc.count());
+        System.out.println(cc.isConnected(0, 6));
+        System.out.println(cc.isConnected(0, 5));
+
+        ArrayList<Integer>[] comp = cc.components();
+        for (int ccid = 0; ccid < comp.length; ccid++) {
+          System.out.print("component " + ccid + ": ");
+          for (int w : comp[ccid]) {
+            System.out.print(w + " ");
+          }
+          System.out.println();
+        }
+      }
+    }
+
+Path
+^^^^^^^^^^^^
+
+.. code-block:: java
+    :linenos:
+
+    import java.util.ArrayList;
+    import java.util.Collections;
+
+    public class Path {
+      private Graph G;
+      private int s;
+      private int t;
+      private int[] pre;
+
+      public Path(Graph G, int s, int t) {
+        G.validateVertex(s);
+        G.validateVertex(t);
+        this.G = G;
+        this.s = s;
+        this.t = t;
+        pre = new int[G.V()];
+        for (int i = 0; i < pre.length; i++) {
+          pre[i] = -1;
+        }
+        dfs(s, s);
+        for (int e : pre) {
+          System.out.print(e + " ");
+        }
+        System.out.println();
+      }
+
+      private boolean dfs(int v, int parent) {
+        pre[v] = parent;
+        if (v == t) return true;
+        for (int w : G.adj(v)) {
+          if (pre[w] == -1) {
+            if (dfs(w, v)) return true;
+          }
+        }
+        return false;
+      }
+
+      public boolean isConnected() {
+        return pre[t] != -1;
+      }
+
+      public Iterable<Integer> path() {
+        ArrayList<Integer> res = new ArrayList<>();
+        if (!isConnected()) return res;
+    
+        int cur = t;
+        while (cur != s) {
+          res.add(cur);
+          cur = pre[cur];
+        }
+        res.add(s);
+        Collections.reverse(res);
+        return res;
+      }
+
+      public static void main(String[] args) {
+        Graph g = new Graph("../data/g2.txt");
+        Path path1 = new Path(g, 0, 6);
+        System.out.println("0 --> 6: " + path1.path());
+        Path path2 = new Path(g, 0, 1);
+        System.out.println("0 --> 6: " + path2.path());
+        Path path3 = new Path(g, 0, 5);
+        System.out.println("0 --> 6: " + path3.path());
+      }
+    }
+
+SingleSourcePath
+^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: java
+    :linenos:
+
+    import java.util.ArrayList;
+    import java.util.Collections;
+
+    public class SingleSourcePath {
+      private Graph G;
+      private int s;
+      private int[] pre;
+
+      public SingleSourcePath(Graph G, int s) {
+        G.validateVertex(s);
+        this.G = G;
+        this.s = s;
+        pre = new int[G.V()];
+        for (int i = 0; i < pre.length; i++) {
+          pre[i] = -1;
+        }
+        dfs(s, s);
+      }
+
+      private void dfs(int v, int parent) {
+        pre[v] = parent;
+        for (int w : G.adj(v)) {
+          if (pre[w] == -1) {
+            dfs(w, v);
+          }
+        }
+      }
+
+      public boolean isConnectedTo(int t) {
+        G.validateVertex(t);
+        return pre[t] != -1;
+      }
+
+      public Iterable<Integer> path(int t) {
+        ArrayList<Integer> res = new ArrayList<>();
+        if (!isConnectedTo(t)) return res;
+    
+        int cur = t;
+        while (cur != s) {
+          res.add(cur);
+          cur = pre[cur];
+        }
+        res.add(s);
+        Collections.reverse(res);
+        return res;
+      }
+
+      public static void main(String[] args) {
+        Graph g = new Graph("../data/g2.txt");
+        SingleSourcePath sspath = new SingleSourcePath(g, 0);
+        System.out.println("0 --> 6: " + sspath.path(6));
+        System.out.println("0 --> 5: " + sspath.path(5));
+      }
+    }
+
+    // TODO: 利用单源路径代码解决所有点对的路径算法，path(int s, int t)
+
+CycleDetection
+^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: java
+    :linenos:
+
+    import java.util.ArrayList;
+
+    public class CycleDetection {
+      private Graph G;
+      private boolean[] visited;
+      private boolean hasCycle = false;
+
+      public CycleDetection(Graph G) {
+        if (G.isDirected()) {
+          throw new IllegalArgumentException("CycleDetection only works in undirected graph");
+        }
+        this.G = G;
+        visited = new boolean[G.V()];
+        for (int v = 0; v < G.V(); v++) {
+          if (!visited[v]) {
+           if (dfs(v, v)) {
+             hasCycle = true;
+             break;
+           }
+          }
+        }
+      }
+
+      private boolean dfs(int v, int parent) {
+        visited[v] = true;
+        for (int w : G.adj(v)) {
+          if (!visited[w]) {
+           if (dfs(w, v)) return true;
+          } else if (w != parent) {
+           return true;
+          }
+        }
+        return false;
+      }
+
+      public boolean hasCycle() {
+        return hasCycle;
+      }
+
+      public static void main(String[] args) {
+        Graph g1 = new Graph("../data/g2.txt");
+        CycleDetection cd1 = new CycleDetection(g1);
+        System.out.println("g2 has cycles? " + cd1.hasCycle());
+        Graph g2 = new Graph("../data/g3.txt");
+        CycleDetection cd2 = new CycleDetection(g2);
+        System.out.println("g3 has cycles? " + cd2.hasCycle());;
+      }
+    }
+
+BipartiteDetection
+^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: java
+    :linenos:
+
+    import java.util.ArrayList;
+
+    // 通过为节点染色的方式判断图是否是二分图
+    public class BipartiteDetection {
+      private Graph G;
+      private int[] visited;  // -1: 还未被访问，0: 蓝色，1: 绿色
+      private boolean isBipartite = true;
+  
+      public BipartiteDetection(Graph G) {
+        this.G = G;
+        visited = new int[G.V()];
+        for (int i = 0; i < G.V(); i++) {
+          visited[i] = -1;
+        }
+    
+        for (int v = 0; v < G.V(); v++) {  // 需要对每一个连通分量进行检测，任意一个连通分量不是二分图，则整体都不是二分图
+          if (visited[v] == -1) {
+            if (!dfs(v, 0)) {
+              isBipartite = false;
+              break;
+            }
+          }
+        }
+
+        for (int e : visited) {
+          System.out.print(e + " ");
+        }
+        System.out.println();
+      }
+
+      private boolean dfs(int v, int color) {
+        visited[v] = color;
+        for (int w : G.adj(v)) {
+          if (visited[w] == -1) {
+            // TODO: 想一下下面两种写法等价吗？
+            // 不等价，return false; 必须有，不然不能把局部的结果向上一层传递，导致上一层直接返回了true
+            // dfs(w, 1 - color);
+            if (!dfs(w, 1 - color)) return false;
+          } else {  // 下面的if可以和当前的else合并，直接写成else if (visited[w] == visited[v]) {}即可
+            if (visited[w] == visited[v]) {
+              return false;
+            }
+          }
+        }
+        return true;
+      }
+
+      private boolean isBipartite() {
+        return isBipartite;
+      }
+
+      public static void main(String[] args) {
+        Graph g = new Graph("../data/g3.txt");
+        System.out.println(g);
+        BipartiteDetection bdetection = new BipartiteDetection(g);
+        System.out.println(bdetection.isBipartite());
+      }
+    }
+
+HamiltonLoop
+^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: java
+    :linenos:
+
+    import java.util.ArrayList;
+    import java.util.Collections;
+
+    // public class HamiltonLoop {
+    //   private Graph G;
+    //   private boolean[] visited;
+    //   private int[] pre;
+    //   private int end = -1;
+
+    //   public HamiltonLoop(Graph G) {
+    //     this.G = G;
+    //     visited = new boolean[G.V()];
+    //     pre = new int[G.V()];
+    //     // dfs1(0, 0);
+    //     // dfs2(0, 0, G.V());
+    //     dfs3(0, 0, G.V());
+    //   }
+
+    //   private boolean dfs1(int v, int parent) {
+    //     visited[v] = true;
+    //     pre[v] = parent;
+    //     for (int w : G.adj(v)) {
+    //       if (!visited[w]) {
+    //         if (dfs1(w, v)) return true;
+    //       } else if (w == 0 && allVisited()) {  // 每次都调用allVisited()开销是比较大的，可以用一个left变量进行优化
+    //         end = v;
+    //         return true;
+    //       }
+    //     }
+    //     visited[v] = false;
+    //     return false;
+    //   }
+
+    //   // 优化dfs1
+    //   private boolean dfs2(int v, int parent, int left) {
+    //     visited[v] = true;
+    //     pre[v] = parent;
+    //     left--;
+    //     for (int w : G.adj(v)) {
+    //       if (!visited[w]) {
+    //         if (dfs2(w, v, left)) return true;
+    //       } else if (w == 0 && left == 0) {  // 使用left来判断当前是否已经访问了所有节点
+    //         end = v;
+    //         return true;
+    //       }
+    //     }
+    //     visited[v] = false;
+    //     // left++;  // 由于left是局部变量，不会影响到上一层，所以这一句写或不写都行，如果left是成员变量的话，则必须执行++操作
+    //     return false;
+    //   }
+
+    //   // dfs2的另一种写法
+    //   private boolean dfs3(int v, int parent, int left) {
+    //     visited[v] = true;
+    //     pre[v] = parent;
+    //     left--;
+    //     if (left == 0 && G.hasEdge(v, 0)) {  // 将终止位置放在这里，结果等价
+    //       end = v;
+    //       return true;
+    //     }
+    //     for (int w : G.adj(v)) {
+    //       if (!visited[w]) {
+    //         if (dfs3(w, v, left)) return true;
+    //       }
+    //     }
+    //     visited[v] = false;
+    //     // left++;  // 由于left是局部变量，不会影响到上一层，所以这一句写或不写都行，如果left是成员变量的话，则必须执行++操作
+    //     return false;
+    //   }
+
+    //   private boolean allVisited() {
+    //     for (int i = 0; i < G.V(); i++) {
+    //       if (!visited[i]) return false;
+    //     }
+    //     return true;
+    //   }
+
+    //   public Iterable<Integer> loop() {
+    //     ArrayList<Integer> res = new ArrayList<>();
+    //     if (end == -1) return res;
+    
+    //     int cur = end;
+    //     while (cur != 0) {
+    //       res.add(cur);
+    //       cur = pre[cur];
+    //     }
+    //     res.add(0);
+    //     Collections.reverse(res);
+    //     return res;
+    //   }
+
+    //   public static void main(String[] args) {
+    //     Graph g = new Graph("../data/g6.txt");
+    //     HamiltonLoop hl = new HamiltonLoop(g);
+    //     System.out.println(hl.loop());
+    //   }
+    // }
+
+    // 优化visited数组，用一个int整数表示visit信息（由于这个题目的解法是指数级别的，n不可
+    // 能很大，用32位整数足够了）
+    // 注意观察原始写法中的visited数组的变化
+    // 具体操作：
+    // (1) 查看第i为是否为1？            (visited & (1 << i)) == 0
+    // (2) 如果第i位已经为0，将其设为1    visited += (1 << i)
+    // (3) 如果第i为已经为1，将其设为0    visited -= (1 << i)
+    public class HamiltonLoop {
+      private Graph G;
+      int visited;
+  
+      private int[] pre;
+      private int end = -1;
+
+      public HamiltonLoop(Graph G) {
+        this.G = G;
+        visited = 0;
+        pre = new int[G.V()];
+        dfs3(0, 0, G.V());
+      }
+
+      private boolean dfs3(int v, int parent, int left) {
+        visited += (1 << v);
+        pre[v] = parent;
+        left--;
+        if (left == 0 && G.hasEdge(v, 0)) {  // 将终止位置放在这里，结果等价
+          end = v;
+          return true;
+        }
+        for (int w : G.adj(v)) {
+          if ((visited & (1 << w)) == 0) {
+            if (dfs3(w, v, left)) return true;
+          }
+        }
+        visited -= (1 << v);
+        // left++;  // 由于left是局部变量，不会影响到上一层，所以这一句写或不写都行，如果left是成员变量的话，则必须执行++操作
+        return false;
+      }
+
+      public Iterable<Integer> loop() {
+        ArrayList<Integer> res = new ArrayList<>();
+        if (end == -1) return res;
+    
+        int cur = end;
+        while (cur != 0) {
+          res.add(cur);
+          cur = pre[cur];
+        }
+        res.add(0);
+        Collections.reverse(res);
+        return res;
+      }
+
+      public static void main(String[] args) {
+        Graph g = new Graph("../data/g6.txt");
+        HamiltonLoop hl = new HamiltonLoop(g);
+        System.out.println(hl.loop());
+      }
+    }
+
+    // TODO: 求解哈密尔路径
+    // 参考leetcode第980题
+    // 注意几点：
+    // (1) 需要用户初始时传入起始点
+    // (2) 用户在调用时需要传入终点
+    // (3) dfs中的递归出口的判断条件有所改变，参考980题
+
+Minimum Spanning Tree
+-----------------------------
+
+Kruscal
+^^^^^^^^^^^^
+
+.. code-block:: java
+    :linenos:
+
+    import java.util.ArrayList;
+    import java.util.Collections;
+
+    // 时间复杂度：O(ElogE)
+    public class Kruscal {
+      private WeightedGraph G;
+      private ArrayList<WeightedEdge> mst; // minimum spanning tree
+
+      public Kruscal (WeightedGraph G) {
+        this.G = G;
+        mst = new ArrayList<WeightedEdge>();
+
+        // 首先需要确认用户传入的G是连通图，因为最小生成树是针对连通图的
+        // O(V+E)
+        WCC cc = new WCC(G);
+        if (cc.count() > 1) return;
+
+        // kruscal
+        ArrayList<WeightedEdge> edges = new ArrayList<>();
+        for (int v = 0; v < G.V(); v++) {
+          for (int w : G.adj(v)) {
+            if (v < w) {
+              edges.add(new WeightedEdge(v, w, G.getWeight(v, w)));
+            }
+          }
+        }
+        // kruscal算法的大部分时间消耗在了排序O(ElogE)
+        Collections.sort(edges);
+
+        // 快速判环，使用并查集
+        // O(1)
+        UF uf = new UF(G.V());
+        for (WeightedEdge edge : edges) {
+          int v = edge.getV();
+          int w = edge.getW();
+          if (!uf.isConnected(v, w)) {
+            mst.add(edge);
+            uf.unionElements(v, w);
+          }
+        }
+      }
+
+      public ArrayList<WeightedEdge> result() {
+        return mst;
+      }
+
+      public static void main(String[] args) {
+        WeightedGraph g = new WeightedGraph("../data/g7.txt");
+        Kruscal kruscal = new Kruscal(g);
+        System.out.println(kruscal.result());
+      }
+    }
+
+Prim
+^^^^^^^^^^^^
+
+.. code-block:: java
+    :linenos:
+
+    import java.util.ArrayList;
+    import java.util.Queue;
+    import java.util.PriorityQueue;  // 默认是最小堆，注意和C++的区别
+
+    // O((V-1)*(V+E))=O(V*E)
+    // public class Prim {
+    //   private WeightedGraph G;
+    //   private ArrayList<WeightedEdge> mst;
+
+    //   public Prim(WeightedGraph G) {
+    //     this.G = G;
+    //     mst = new ArrayList<>();
+
+    //     WCC cc = new WCC(G);
+    //     if (cc.count() > 1) return;
+
+    //     // prim
+    //     boolean visited[] = new boolean[G.V()];
+    //     visited[0] = true;
+    //     for (int i = 1; i < G.V(); i++) {
+    //       WeightedEdge minEdge = new WeightedEdge(-1, -1, Integer.MAX_VALUE);
+    //       for (int v = 0; v < G.V(); v++) {
+    //         if (visited[v]) {
+    //           for (int w : G.adj(v)) {
+    //             if (!visited[w] && G.getWeight(v, w) < minEdge.getWeight()) {
+    //               minEdge = new WeightedEdge(v, w, G.getWeight(v, w));
+    //             }
+    //           }
+    //         }
+    //       }
+    //       mst.add(minEdge);
+    //       visited[minEdge.getV()] = true;
+    //       visited[minEdge.getW()] = true;
+    //     }
+    //   }
+
+    //   public ArrayList<WeightedEdge> result() {
+    //     return mst;
+    //   }
+
+    //   public static void main(String[] args) {
+    //     WeightedGraph g = new WeightedGraph("../data/g7.txt");
+    //     Prim prim = new Prim(g);
+    //     System.out.println(prim.result());
+    //   }
+    // }
+
+    // 使用优先队列(使用最小堆)优化横切边的遍历与选择
+    // O(ElogE)
+    // 每条边都会入队1此，出队1次，O(E)
+    // 堆的高度为O(logE)
+    // 所以总共为O(ElogE)
+    // 在时间复杂度方面，Kruscal算法和Prim算法打平
+
+    // 重点！！！
+    // 在面试中记得要是用Prim算法来求最小生成树
+    // 因为大多数标准库中都有优先队列的实现，但是都没有并查集的实现
+    // 所以实现prim可以直接利用标准库，更加简单
+
+    @SuppressWarnings("unchecked")
+    public class Prim {
+      private WeightedGraph G;
+      private ArrayList<WeightedEdge> mst;
+
+      public Prim(WeightedGraph G) {
+        this.G = G;
+        mst = new ArrayList<>();
+
+        WCC cc = new WCC(G);
+        if (cc.count() > 1) return;
+
+        // prim
+        boolean visited[] = new boolean[G.V()];
+        visited[0] = true;
+        Queue pq = new PriorityQueue<WeightedEdge>();
+        for (int w : G.adj(0)) {
+          pq.add(new WeightedEdge(0, w, G.getWeight(0, w)));
+        }
+        while (!pq.isEmpty()) {
+          WeightedEdge minEdge = (WeightedEdge)pq.remove();
+          if (visited[minEdge.getV()] && visited[minEdge.getW()]) continue;
+          mst.add(minEdge);
+          int new_v = visited[minEdge.getV()] ? minEdge.getW() : minEdge.getV();
+          visited[new_v] = true;
+          for (int w : G.adj(new_v)) {
+            if (!visited[w]) {
+              pq.add(new WeightedEdge(new_v, w, G.getWeight(new_v, w)));
+            }
+          }
+        }
+      }
+
+      public ArrayList<WeightedEdge> result() {
+        return mst;
+      }
+
+      public static void main(String[] args) {
+        WeightedGraph g = new WeightedGraph("../data/g7.txt");
+        Prim prim = new Prim(g);
+        System.out.println(prim.result());
+      }
+    }
+
+    // TODO: 还可以利用索引堆将Prim优化成O(ElogV)
+    // 注意：索引堆和使用索引堆进行优化在面试中不会考
+
+Shortest Path
+-----------------------------
+
+Dijkstra
+^^^^^^^^^^^^
+
+.. code-block:: java
+    :linenos:
+
+    import java.util.Arrays;
+    import java.util.PriorityQueue;
+    import java.util.Collections;
+    import java.util.ArrayList;
+
+    // Dijkstra 算法步骤
+    // 前提：没有负权边
+    // (1) 找到当前没有确定最终最短路径的节点
+    // (2) 确认这个节点的路径长度就是从源点到该节点的最短路径长度（利用前提: 没有负权边，从其他节点绕道一定比当前的值大）
+    // (3) 根据这个节点的路径长度更新其他节点的路径长度
+    // 即：找最小值-->确定一个解-->更新权值
+
+    // O(V^2)
+    // public class Dijkstra {
+    //   private WeightedGraph G;
+    //   private int s;
+    //   private int[] dis;
+    //   private boolean[] visited;
+
+    //   public Dijkstra(WeightedGraph G, int s) {
+    //     this.G = G;
+    //     G.validateVertex(s);
+    //     this.s = s;
+    //     dis = new int[G.V()];
+    //     Arrays.fill(dis, Integer.MAX_VALUE);
+    //     dis[s] = 0;
+    //     visited = new boolean[G.V()];
+    //     // 注意不要在初始时将visited[0]设置成 true，否则找最小值的循环将立刻终止，细想一下
+
+    //     // O(V^2)
+    //     while (true) {
+    //       // 第一步：寻找最小值
+    //       int cur_dis = Integer.MAX_VALUE;
+    //       int cur = -1;
+    //       for (int v = 0; v < G.V(); v++) {
+    //         if (!visited[v] && dis[v] < cur_dis) {
+    //           cur_dis = dis[v];
+    //           cur = v;
+    //         }
+    //       }
+    //       if (cur == -1) break;
+
+    //       // 第二步：确认
+    //       visited[cur] = true;
+
+    //       // 第三步：更新
+    //       for (int w : G.adj(cur)) {
+    //         if (!visited[w]) {
+    //           if (dis[cur] + G.getWeight(cur, w) < dis[w]) {
+    //             dis[w] = dis[cur] + G.getWeight(cur, w);
+    //           }
+    //         }
+    //       }
+    //     }
+    //   }
+
+    //   public boolean isConnectedTo(int v) {
+    //     G.validateVertex(v);
+    //     return visited[v];
+    //   }
+
+    //   public int disTo(int v) {
+    //     G.validateVertex(v);
+    //     return dis[v];
+    //   }
+
+    //   public static void main(String[] args) {
+    //     WeightedGraph g = new WeightedGraph("../data/g8.txt");
+    //     Dijkstra dij = new Dijkstra(g, 0);
+    //     for (int v = 0; v < g.V(); v++) {
+    //       System.out.print(dij.disTo(v) + " ");
+    //     }
+    //     System.out.println();
+    //   }
+    // }
+
+    // 优化
+    // 上一种方法如果不看寻找最小值的部分，则时间复杂度为O(V+E)，所以着重优化寻找最小值部分的逻辑
+    // 方法：使用优先队列
+    // 时间复杂度：O(ElogE)
+    // 实际应用中，大部分情况下都是稀疏图，所以这种优化效果很明显
+    public class Dijkstra {
+      private WeightedGraph G;
+      private int s;
+      private int[] dis;
+      private boolean[] visited;
+      private int[] pre;
+
+      private class Node implements Comparable<Node> {
+        public int v, dis;
+    
+        public Node(int v, int dis) {
+          this.v = v;
+          this.dis = dis;
+        }
+
+        @Override
+        public int compareTo(Node that) {
+          return this.dis - that.dis;
+        }
+      }
+
+      public Dijkstra(WeightedGraph G, int s) {
+        this.G = G;
+        G.validateVertex(s);
+        this.s = s;
+    
+        dis = new int[G.V()];
+        Arrays.fill(dis, Integer.MAX_VALUE);  // 若某个实际路径值大于MAX_VALUE，算法将不能正确执行
+    
+        pre = new int[G.V()];
+        Arrays.fill(pre, -1);
+
+        dis[s] = 0;
+        pre[s] = s;
+        visited = new boolean[G.V()];
+        // 注意不要在初始时将visited[0]设置成 true，否则找最小值的循环将立刻终止，细想一下
+
+        PriorityQueue<Node> pq = new PriorityQueue<>();
+        pq.add(new Node(s, 0));
+        while (!pq.isEmpty()) {  // 循环最多执行E次 O(ElogE)
+          // 第一步：寻找最小值
+          int cur = pq.remove().v;  // O(logE)
+          if (visited[cur]) continue;  // (1)
+
+          // 第二步：确认
+          visited[cur] = true;  // 如果只是想求出到某点的最短路径，在此处跳出即可？
+
+          // 第三步：更新
+          for (int w : G.adj(cur)) {  // 最坏情况下，对于每条边都往优先队列中压入一个元素，多以队列中最多有E个元素
+            if (!visited[w]) {
+              if (dis[cur] + G.getWeight(cur, w) < dis[w]) {
+                dis[w] = dis[cur] + G.getWeight(cur, w);
+                pq.add(new Node(w, dis[w]));  // 可能会造成重复接节点入队，所以要在(1)处增加一个判断
+                pre[w] = cur;
+              }
+            }
+          }
+        }
+      }
+
+      public boolean isConnectedTo(int v) {
+        G.validateVertex(v);
+        return visited[v];
+      }
+
+      public int disTo(int v) {
+        G.validateVertex(v);
+        return dis[v];
+      }
+
+      public Iterable<Integer> path(int t) {
+        ArrayList<Integer> res = new ArrayList<>();
+        if (!isConnectedTo(t)) return res;
+
+        int cur = t;
+        while (cur != s) {
+          res.add(cur);
+          cur = pre[cur];
+        }
+        res.add(s);
+        Collections.reverse(res);
+        return res;
+      }
+
+      public static void main(String[] args) {
+        WeightedGraph g = new WeightedGraph("../data/g8.txt");
+        Dijkstra dij = new Dijkstra(g, 0);
+        for (int v = 0; v < g.V(); v++) {
+          System.out.print(dij.disTo(v) + " ");
+        }
+        System.out.println();
+    
+        System.out.println(dij.path(3));
+      }
+    }
+
+    // TODO: 借助索引堆可以将Dijkstra算法优化到O(ElogV)
+    // 面试过程中不会考察索引堆及其应用
+
+    // TODO：若只关注从从s到t之间的最短路径，当第二步确认是目标节点后直接跳出即可
+
+    // TODO：如何求所有点对的最短路径？
+    // 运行V次Dijkstra算法即可，时间复杂度V*ElogE
+
+    // ！！！注意
+    // Dijkstra不能处理负权边！！！
+
+BellmanFord
+^^^^^^^^^^^^^^
+
+.. code-block:: java
+    :linenos:
+
+    import java.util.Arrays;
+    import java.util.ArrayList;
+    import java.util.Collections;
+
+    // Bellman-Ford算法执行步骤
+    // 初始dis[s]=0，其余dis值为无穷
+    // 对所有的边进行一次松弛操作，则求出了到所有点，经过的边数最多为1的最短路
+    // 对所有的边再进行一次松弛操作，则求出了到所有点，经过的边数最多为2的最短路
+    // ......
+    // 对所有的边进行V-1次松弛操作，则求出了到所有点，经过的边数最多为V-1的最短路
+    // 如果对所有的边再进行一次松弛操作还能更新dis，则说明图中包含负权环
+
+    // 时间复杂度: O(V*E)
+    public class BellmanFord {
+      private WeightedGraph G;
+      private int s;
+      private int[] dis;
+      private int[] pre;
+      private boolean hasNegativeCycle = false;
+
+      public BellmanFord(WeightedGraph G, int s) {
+        this.G = G;
+        G.validateVertex(s);
+        this.s = s;
+
+        dis = new int[G.V()];
+        Arrays.fill(dis, Integer.MAX_VALUE);
+        dis[0] = 0;
+
+        pre = new int[G.V()];
+        Arrays.fill(pre, -1);
+
+        for (int pass = 1; pass < G.V(); pass++) {  // v - 1轮
+          // 如果是无向图，每轮操作应该是对每条边执行了两次松弛(因为(1)实际存储无向边时就
+          // 是正这反着存放了两次,(2)一条无向边相当于两条有向边)
+          // 如果是有向图，每轮操作对每条边执行一次松弛
+          // 注意：无向图中只要存在一条负权边，就形成了负权环(因为一条无向边相当于两条有向边
+          // 这两条边就会形成负权环)，此时使用Bellman-Ford没有意义
+          // 当然，Dijkstra算法也解决不了负权边
+          // 有负权边但是没有负权环的情况只有在有向图的情况下才成立
+
+          // dis[v]表示从s到v经过的边数不超过k的最短距离，每一轮迭代，k+1，直至k=V-1，此时
+          // 路径足以连接所有的节点，所以训话终止
+
+          // 核心逻辑
+          for (int v = 0; v < G.V(); v++) {
+            for (int w : G.adj(v)) {
+              // 添加dis[v] != Integer.MAX_VALUE的判断是为了处理dis[v]为无穷的情况，此时
+              // 按照算法内容不能进行松弛操作，但是由于是用MAX_VALUE来表示无穷，因而
+              // dis[v] + G.getWeight(v, w) < dis[w]是有可能成立的（例如dis[w]此时也为
+              // 无穷），因而会执行松弛操作，利用前述的判断可以避免这种情况。
+              // 此外，当dis[v]为无穷时，G.getWeight(v, w)若未正，也可能会出现越界的情况，
+              // 前述的判断也可以避免这种情况。
+              // 对dis[w]不需要判断，因为若果dis[v]为合法值时，如果dis[w]为无穷，此时，就
+              // 应该对其进行更新，是正确的处理逻辑
+              if (dis[v] != Integer.MAX_VALUE && dis[v] + G.getWeight(v, w) < dis[w]) {
+                dis[w] = dis[v] + G.getWeight(v, w);
+                pre[w] = v;
+              }
+            }
+          }
+        }
+
+        // 在多进行一轮松弛，若dis仍然可以被更新，则说明图中存在负权环，此时找不到最路径
+        for (int v = 0; v < G.V(); v++) {
+          for (int w : G.adj(v)) {
+            if (dis[v] != Integer.MAX_VALUE && dis[v] + G.getWeight(v, w) < dis[w]) {
+              hasNegativeCycle = true;
+            }
+          }
+        }
+      }
+
+      public boolean hasNegCycle() {
+        return hasNegativeCycle;
+      }
+
+      public boolean isConnectiveTo(int v) {
+        G.validateVertex(v);
+        return dis[v] != Integer.MAX_VALUE;
+      }
+
+      public int disTo(int v) {
+        G.validateVertex(v);
+        if (hasNegativeCycle) throw new RuntimeException("exist negative cycle");
+        return dis[v];
+      }
+
+      public Iterable<Integer> path(int t) {
+        ArrayList<Integer> res = new ArrayList<>();
+        if (!isConnectiveTo(t)) return res;
+
+        int cur = t;
+        while (cur != s) {
+          res.add(cur);
+          cur = pre[cur];
+        }
+        res.add(s);
+        Collections.reverse(res);
+        return res;
+      }
+
+      public static void main(String[] args) {
+        WeightedGraph g = new WeightedGraph("../data/g8.txt");
+        BellmanFord bf = new BellmanFord(g, 0);
+        if (!bf.hasNegCycle()) {
+          for (int v = 0; v < g.V(); v++) {
+            System.out.print(bf.disTo(v) + " ");
+          }
+          System.out.println();
+
+          System.out.println(bf.path(3));
+        } else {
+          System.out.println("exist negative cycle");
+        }
+    
+      }
+    }
+
+    // TODO：由于目前没有实现有向图，因而没有对有向图进行测试，只是测试了无向图，但是也相当
+    // 于测试了有向图
+    // BellmanFord算法可以直接应用在有向图中
+
+    // Dijkstra比BellmanFord快的原因是，Dijkstra利用了没有负权边这样一个事实，相比之下，
+    // BellmanFord由于不具备这个条件，就需要进行更多的性能消耗
+
+    // 更多关于Bellman-Ford算法的讨论
+    // 对于只关注s到t的最短路径的问题？ ！！！不能提前终止（和Dijkstra不同）
+    // （因为Bellman-Ford只是找到从源点到某一个顶点经过的边数不超过k的最短路径，不能保证当前
+    // 找到的dis[t]就是最终的最短路径）
+
+    // 尽管如此，Bellman-Ford算法仍然能进行优化，参考SPFA(Shortest Path Fast Algorithm)（优化空转情况）
+
+    // Bellman-Ford算法面试中很少考察到
+
+Floyed
+^^^^^^^^^^^^^^
+
+.. code-block:: java
+    :linenos:
+
+    import java.util.Arrays;
+
+    // 一次求解所有点对最短路径(Dijkstra/BellmanFord一次只能求出一个点对)
+    // 应用：求图的直径(所有点对最短路径的最大值)
+
+    // 求所有点对最短路径
+    // Dijkstra   O(V*ElogE)   不能包含负权边
+    // Bellman-Ford   O(V*VE)  可以包含负权边(但是有负权环的情况下没有意义)；可以检测负权环
+    // Floyed:   O(V*V*V)      可以包含负权边；检测负权环
+
+    // 使用指南：
+    // Floyed 时间复杂度低于Bellman-Ford，但是对于稀疏图来说，Floyed时间复杂度比Dijkstra高
+    // 因此，如果希望在包含负权边的图中求解所有点对最短路径，使用Floyed算法最优，但是如果
+    // 没有负权边的话，使用Dijkstra算法最优
+
+    // Floyed算法别名：Floyed-Warshall、Roy-Floyed、Roy-Warshall
+
+    // 算法核心内容
+    // 初始：如果v-w有边，dis[v][w]=vw, dis[v][v]=0，否则，dis[v][w]=无穷
+    // for(int t = 0; t < V; t++)  // 每轮循环求解出中间经过[0...t]这些点所能得到的最短路径
+    //   for (int v = 0; v < V; v++)
+    //     for (int w = 0; w < V; w++)
+    //       if (dis[v][t] + dis[t][w] < dis[v][w])
+    //         dis[v][w] = dis[v][t] + dis[t][w]
+
+    // 如何检测负权环呢？
+    // dis[v][v]<0 (自己到自己)，如果没有负权环的话，自己到自己的距离一定是0，只要是非0一定
+    // 存在负权环
+
+    public class Floyed {
+      private WeightedGraph G;
+      private int[][] dis;
+      private boolean hasNegativeCycle = false;
+
+      public Floyed(WeightedGraph G) {
+        this.G = G;
+
+        // 初始化
+        dis = new int[G.V()][G.V()];
+        for (int i = 0; i< G.V(); i++) {
+          Arrays.fill(dis[i], Integer.MAX_VALUE);
+        }
+
+        for (int v = 0; v < G.V(); v++) {
+          dis[v][v] = 0;
+          for (int w : G.adj(v)) {
+            dis[v][w] = G.getWeight(v, w);
+          }
+        }
+
+        for (int t = 0; t < G.V(); t++) {
+          for (int v = 0; v < G.V(); v++) {
+            for (int w = 0; w < G.V(); w++) {
+              if (dis[v][t] != Integer.MAX_VALUE &&
+                  dis[t][w] != Integer.MAX_VALUE && 
+                  dis[v][t] + dis[t][w] < dis[v][w]) {
+                dis[v][w] = dis[v][t] + dis[t][w];
+              }
+            }
+          }
+        }
+
+        for (int v = 0; v < G.V(); v++) {
+          if (dis[v][v] < 0) hasNegativeCycle = true;
+        }
+      }
+
+      public boolean hasNegCycle() { return hasNegativeCycle; }
+
+      public boolean isConnectedTo(int v, int w) {
+        G.validateVertex(v);
+        G.validateVertex(w);
+        return dis[v][w] != Integer.MAX_VALUE;
+      }
+
+      public int disTo(int v, int w) {
+        G.validateVertex(v);
+        G.validateVertex(w);
+        return dis[v][w];
+      }
+
+      public static void main(String[] args) {
+        WeightedGraph g = new WeightedGraph("../data/g8.txt");
+        Floyed floyed = new Floyed(g);
+        if (!floyed.hasNegCycle()) {
+          for (int v = 0; v < g.V(); v++) {
+            for (int w = 0; w < g.V(); w++) {
+              System.out.print(floyed.disTo(v, w) + " ");
+            }
+            System.out.println();
+          }
+        } else {
+          System.out.println("exist negative cycle");
+        }
+      }
+    }
+
+Directed Graph
+-----------------
+
+DirectedCycleDetection
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: java
+    :linenos:
+
+    import java.util.ArrayList;
+
+    // 仅针对有向无权图进行环检测
+
+    // 有向图环检测算法和无向图环检测算法的区别是：
+    // 不能简单的通过判断节点被访问过并且不是父亲节点来确定是否存在环，如(1,2)(1,3)(2,3)就
+    // 没有形成环，但是按照无向图判环的逻辑，将会错误的认为存在环
+    // 而是应该通过判断节点是否已经在搜索路径上了来确定是否存在环，每次递归返回时都要将当前
+    // 节点从搜索路径上删除
+    // 此时，parent信息已经没有用了
+    public class DirectedCycleDetection {
+      private Graph G;
+      private boolean[] visited;
+      // onPath与CycleDetection的唯一区别，用来记录节点是否在搜索路径上，当访问某节点时，
+      // 如果该节点在搜索路径上，并且已经被访问过，就形成了环
+      private boolean[] onPath;
+      private boolean hasCycle = false;
+
+      public DirectedCycleDetection(Graph G) {
+        if (!G.isDirected()) {
+          throw new IllegalArgumentException("DirectedCycleDetection only works in directed graph");
+        }
+        this.G = G;
+        visited = new boolean[G.V()];
+        onPath = new boolean[G.V()];
+        for (int v = 0; v < G.V(); v++) {
+          if (!visited[v]) {
+            if (dfs(v)) {
+             hasCycle = true;
+             break;
+            }
+          }
+        }
+      }
+
+      // private boolean dfs(int v, int parent) {  // parent 变量已经不需要了
+      private boolean dfs(int v) {
+        visited[v] = true;
+        onPath[v] = true;
+        for (int w : G.adj(v)) {
+          if (!visited[w]) {
+            if (dfs(w)) return true;
+          // } else if (w != parent && onPath[w]) {  // 这么写会遗漏parent和child之间形成的环，在无向图中通常不认为这是一种环，但是有向图中是环
+          } else if (onPath[w]) {  // 正确写法，相应的也可以直接删除parent变量
+            return true;
+          }
+        }
+        onPath[v] = false;
+        return false;
+      }
+
+      public boolean hasCycle() {
+        return hasCycle;
+      }
+
+      public static void main(String[] args) {
+        Graph g = new Graph("../data/g9.txt", true);
+        DirectedCycleDetection cd = new DirectedCycleDetection(g);
+        System.out.println("g9 has cycles? " + cd.hasCycle());
+      }
+    }
+
+TopoSort
+^^^^^^^^^^^^
+
+.. code-block:: java
+    :linenos:
+
+    // 拓扑排序
+    // 对学习计划中的课程找到一个学习顺序，使得学习每门课程的时候都已经学习完了所有前置课程，在有向图中求解这个顺序的过程就叫做拓扑排序
+    // 步骤:
+    // (1) 首先寻找入度为0的课程，删除该课程及其相应的边，更新其他节点的度
+    // (2) 重复(1)直至没有剩余节点
+
+    // 由于删除操作比较麻烦，所以实际实现时不会去删除节点，而是直接更新其他节点的度即可
+    // 每次更新入度值时，把入度变为0的顶点放入队列，从队列中取出下一个节点
+    // 拓扑排序结果不唯一
+    // 拓扑排序也可能误解(1,2)(2,3)(3,1)
+    // 拓扑排序也具有环检测的能力
+    // 只有有向无环图(DAG)才能顺利进行拓扑排序
+
+    import java.util.ArrayList;
+    import java.util.Queue;
+    import java.util.LinkedList;
+
+    public class TopoSort {
+      private Graph G;
+      private ArrayList<Integer> res;
+      private boolean hasCycle = false;
+
+      public TopoSort(Graph G) {
+        if (!G.isDirected()) {
+          throw new IllegalArgumentException("TopoSort only works in directed graph");
+        }
+        this.G = G;
+    
+        res = new ArrayList<>();
+
+        int[] indegrees = new int[G.V()];
+        Queue<Integer> q = new LinkedList<>();
+        for (int v = 0; v < G.V(); v++) {
+          indegrees[v] = G.indegree(v);
+          if (indegrees[v] == 0) {
+            q.add(v);
+          }
+        }
+
+        while (!q.isEmpty()) {
+          int cur = q.remove();
+          res.add(cur);
+      
+          for (int next : G.adj(cur)) {
+            indegrees[next]--;
+            if (indegrees[next] == 0) {
+              q.add(next);
+            }
+          }
+        }
+
+        if (res.size() != G.V()) {  // 说明存在环
+          hasCycle = true;
+          res.clear();
+        }
+      }
+
+      public boolean hasCycle() {
+        return hasCycle;
+      }
+
+      public ArrayList<Integer> result() {
+        return res;
+      }
+
+      public static void main(String[] args) {
+        Graph g = new Graph("../data/g10.txt", true);
+        TopoSort topoSort= new TopoSort(g);
+        System.out.println(topoSort.result());
+      }
+    }

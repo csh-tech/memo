@@ -2,7 +2,7 @@
 ========
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
    C++/contents
    算法与数据结构/contents
