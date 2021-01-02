@@ -4733,244 +4733,6 @@ UF
       }
     }
 
-BFS
----------
-
-GraphBFS
-^^^^^^^^^^^^
-
-.. code-block:: java
-    :linenos:
-
-    import java.util.ArrayList;
-    import java.util.Queue;
-    import java.util.LinkedList;
-
-    // 时间复杂度：O(V+E)
-    // 图的广度优先遍历有一个特殊的性质，可以用于解决一类特定的问题，悬念
-    // 答案：用广度优先遍历可以解决最短路径问题，而深度优先遍历不可以
-    // 图的广度优先遍历可以解决前一章深度优先遍历所解决的所有问题
-    public class GraphBFS {
-      private Graph G;
-      private boolean[] visited;
-      private ArrayList<Integer> order = new ArrayList<>();
-
-      GraphBFS(Graph G) {
-        this.G = G;
-        visited = new boolean[G.V()];
-        for (int v = 0; v < G.V(); v++) {
-          if (!visited[v]) {
-            bfs(v);
-          }
-        }
-      }
-
-      private void bfs(int s) {
-        Queue<Integer> queue = new LinkedList<>();
-        queue.add(s);
-        visited[s] = true;
-        while (!queue.isEmpty()) {
-          int v = queue.remove();
-          order.add(v);
-      
-          for (int w : G.adj(v)) {
-            if (!visited[w]) {
-              queue.add(w);
-              visited[w] = true;
-            }
-          }
-        }
-      }
-
-      public Iterable<Integer> order() {
-        return order;
-      }
-
-      public static void main(String[] args) {
-        Graph g1 = new Graph("../data/g5.txt");
-        GraphBFS graphBFS1 = new GraphBFS(g1);
-        System.out.println("undirected graph:");
-        System.out.println("BFS order: " + graphBFS1.order());
-
-        Graph g2 = new Graph("../data/g5.txt", true);
-        GraphBFS graphBFS2 = new GraphBFS(g2);
-        System.out.println("directed graph:");
-        System.out.println("BFS order: " + graphBFS2.order());
-      }
-    }
-
-SingleSourcePathBFS
-^^^^^^^^^^^^^^^^^^^^^^^
-
-.. code-block:: java
-    :linenos:
-
-    import java.util.ArrayList;
-    import java.util.Queue;
-    import java.util.LinkedList;
-    import java.util.Collections;
-
-    // 算法面试中的一个坑
-    // 当看到求图中最短路径的时候，第一步应该确定图是有权图还是无权图，对于有权图有特定的
-    // 算法求解，但是对于无权图来说，直接使用广度优先遍历就可以解决，不要想当然的去套有权
-    // 图的各种算法
-
-    // ！！！ 广度优先遍历求最短路径只适用于 无权图 无权图 无权图（重要的事情说三遍）
-
-    public class SingleSourcePathBFS {
-      private Graph G;
-      private int s;
-      private boolean[] visited;
-      private int[] pre;
-
-      SingleSourcePathBFS(Graph G, int s) {
-        this.G = G;
-        this.s = s;
-        visited = new boolean[G.V()];
-        pre = new int[G.V()];
-        for (int i = 0; i < G.V(); i++) {
-          pre[i] = -1;
-        }
-        bfs(s);
-      }
-
-      private void bfs(int s) {
-        Queue<Integer> queue = new LinkedList<>();
-        queue.add(s);
-        visited[s] = true;
-        pre[s] = s;
-        while (!queue.isEmpty()) {
-          int v = queue.remove();
-          for (int w : G.adj(v)) {
-            if (!visited[w]) {
-              queue.add(w);
-              visited[w] = true;
-              pre[w] = v;
-            }
-          }
-        }
-      }
-
-      public boolean isConnectedTo(int t) {
-        G.validateVertex(t);
-        return visited[t];
-      }
-
-      public Iterable<Integer> path(int t) {
-        ArrayList<Integer> res = new ArrayList<>();
-        if (!isConnectedTo(t)) return res;
-
-        int cur = t;
-        while (cur != s) {
-          res.add(cur);
-          cur = pre[cur];
-        }
-        res.add(s);
-        Collections.reverse(res);
-        return res;
-      }
-
-      public static void main(String[] args) {
-        Graph g = new Graph("../data/g2.txt");
-        SingleSourcePathBFS sspath = new SingleSourcePathBFS(g, 0);
-        System.out.println("0 --> 6: " + sspath.path(6));
-        System.out.println("0 --> 5: " + sspath.path(5));
-      }
-    }
-
-    // TODO: 求所有点对路径问题
-    // TODO: 提前返回 
-    // TODO: 求联通分量（个数、具体的连通分量）
-    // TODO: 环检测
-    // TODO: 二分图检测
-
-USSSPath
-^^^^^^^^^^^^^^^
-
-.. code-block:: java
-    :linenos:
-
-    import java.util.ArrayList;
-    import java.util.Queue;
-    import java.util.LinkedList;
-    import java.util.Collections;
-
-    // Unweighted Single Source Shortest Path
-    public class USSSPath {
-      private Graph G;
-      private int s;
-      private boolean[] visited;
-      private int[] pre;
-      private int[] dis;
-
-      USSSPath(Graph G, int s) {
-        this.G = G;
-        this.s = s;
-        visited = new boolean[G.V()];
-        pre = new int[G.V()];
-        dis = new int[G.V()];
-        for (int i = 0; i < G.V(); i++) {
-          pre[i] = -1;
-          dis[i] = -1;
-        }
-        bfs(s);
-        for (int e : dis) {
-          System.out.print(e + " ");
-        }
-        System.out.println();
-      }
-
-      private void bfs(int s) {
-        Queue<Integer> queue = new LinkedList<>();
-        queue.add(s);
-        visited[s] = true;
-        pre[s] = s;
-        dis[s] = 0;
-        while (!queue.isEmpty()) {
-          int v = queue.remove();
-          for (int w : G.adj(v)) {
-            if (!visited[w]) {
-              queue.add(w);
-              visited[w] = true;
-              pre[w] = v;
-              dis[w] = dis[v] + 1;
-            }
-          }
-        }
-      }
-
-      public boolean isConnectedTo(int t) {
-        G.validateVertex(t);
-        return visited[t];
-      }
-
-      public Iterable<Integer> path(int t) {
-        ArrayList<Integer> res = new ArrayList<>();
-        if (!isConnectedTo(t)) return res;
-
-        int cur = t;
-        while (cur != s) {
-          res.add(cur);
-          cur = pre[cur];
-        }
-        res.add(s);
-        Collections.reverse(res);
-        return res;
-      }
-
-      public int distance(int t) {
-        G.validateVertex(t);
-        return dis[t];
-      }
-
-      public static void main(String[] args) {
-        Graph g = new Graph("../data/g2.txt");
-        USSSPath ussspath = new USSSPath(g, 0);
-        System.out.println("0 --> 6: " + ussspath.path(6) + " distance: " + ussspath.distance(6));
-        System.out.println("0 --> 5: " + ussspath.path(5) + " distance: " + ussspath.distance(5));
-      }
-    }
-
 DFS
 ---------
 
@@ -5568,6 +5330,244 @@ HamiltonLoop
     // (1) 需要用户初始时传入起始点
     // (2) 用户在调用时需要传入终点
     // (3) dfs中的递归出口的判断条件有所改变，参考980题
+
+BFS
+---------
+
+GraphBFS
+^^^^^^^^^^^^
+
+.. code-block:: java
+    :linenos:
+
+    import java.util.ArrayList;
+    import java.util.Queue;
+    import java.util.LinkedList;
+
+    // 时间复杂度：O(V+E)
+    // 图的广度优先遍历有一个特殊的性质，可以用于解决一类特定的问题，悬念
+    // 答案：用广度优先遍历可以解决最短路径问题，而深度优先遍历不可以
+    // 图的广度优先遍历可以解决前一章深度优先遍历所解决的所有问题
+    public class GraphBFS {
+      private Graph G;
+      private boolean[] visited;
+      private ArrayList<Integer> order = new ArrayList<>();
+
+      GraphBFS(Graph G) {
+        this.G = G;
+        visited = new boolean[G.V()];
+        for (int v = 0; v < G.V(); v++) {
+          if (!visited[v]) {
+            bfs(v);
+          }
+        }
+      }
+
+      private void bfs(int s) {
+        Queue<Integer> queue = new LinkedList<>();
+        queue.add(s);
+        visited[s] = true;
+        while (!queue.isEmpty()) {
+          int v = queue.remove();
+          order.add(v);
+      
+          for (int w : G.adj(v)) {
+            if (!visited[w]) {
+              queue.add(w);
+              visited[w] = true;
+            }
+          }
+        }
+      }
+
+      public Iterable<Integer> order() {
+        return order;
+      }
+
+      public static void main(String[] args) {
+        Graph g1 = new Graph("../data/g5.txt");
+        GraphBFS graphBFS1 = new GraphBFS(g1);
+        System.out.println("undirected graph:");
+        System.out.println("BFS order: " + graphBFS1.order());
+
+        Graph g2 = new Graph("../data/g5.txt", true);
+        GraphBFS graphBFS2 = new GraphBFS(g2);
+        System.out.println("directed graph:");
+        System.out.println("BFS order: " + graphBFS2.order());
+      }
+    }
+
+SingleSourcePathBFS
+^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: java
+    :linenos:
+
+    import java.util.ArrayList;
+    import java.util.Queue;
+    import java.util.LinkedList;
+    import java.util.Collections;
+
+    // 算法面试中的一个坑
+    // 当看到求图中最短路径的时候，第一步应该确定图是有权图还是无权图，对于有权图有特定的
+    // 算法求解，但是对于无权图来说，直接使用广度优先遍历就可以解决，不要想当然的去套有权
+    // 图的各种算法
+
+    // ！！！ 广度优先遍历求最短路径只适用于 无权图 无权图 无权图（重要的事情说三遍）
+
+    public class SingleSourcePathBFS {
+      private Graph G;
+      private int s;
+      private boolean[] visited;
+      private int[] pre;
+
+      SingleSourcePathBFS(Graph G, int s) {
+        this.G = G;
+        this.s = s;
+        visited = new boolean[G.V()];
+        pre = new int[G.V()];
+        for (int i = 0; i < G.V(); i++) {
+          pre[i] = -1;
+        }
+        bfs(s);
+      }
+
+      private void bfs(int s) {
+        Queue<Integer> queue = new LinkedList<>();
+        queue.add(s);
+        visited[s] = true;
+        pre[s] = s;
+        while (!queue.isEmpty()) {
+          int v = queue.remove();
+          for (int w : G.adj(v)) {
+            if (!visited[w]) {
+              queue.add(w);
+              visited[w] = true;
+              pre[w] = v;
+            }
+          }
+        }
+      }
+
+      public boolean isConnectedTo(int t) {
+        G.validateVertex(t);
+        return visited[t];
+      }
+
+      public Iterable<Integer> path(int t) {
+        ArrayList<Integer> res = new ArrayList<>();
+        if (!isConnectedTo(t)) return res;
+
+        int cur = t;
+        while (cur != s) {
+          res.add(cur);
+          cur = pre[cur];
+        }
+        res.add(s);
+        Collections.reverse(res);
+        return res;
+      }
+
+      public static void main(String[] args) {
+        Graph g = new Graph("../data/g2.txt");
+        SingleSourcePathBFS sspath = new SingleSourcePathBFS(g, 0);
+        System.out.println("0 --> 6: " + sspath.path(6));
+        System.out.println("0 --> 5: " + sspath.path(5));
+      }
+    }
+
+    // TODO: 求所有点对路径问题
+    // TODO: 提前返回 
+    // TODO: 求联通分量（个数、具体的连通分量）
+    // TODO: 环检测
+    // TODO: 二分图检测
+
+USSSPath
+^^^^^^^^^^^^^^^
+
+.. code-block:: java
+    :linenos:
+
+    import java.util.ArrayList;
+    import java.util.Queue;
+    import java.util.LinkedList;
+    import java.util.Collections;
+
+    // Unweighted Single Source Shortest Path
+    public class USSSPath {
+      private Graph G;
+      private int s;
+      private boolean[] visited;
+      private int[] pre;
+      private int[] dis;
+
+      USSSPath(Graph G, int s) {
+        this.G = G;
+        this.s = s;
+        visited = new boolean[G.V()];
+        pre = new int[G.V()];
+        dis = new int[G.V()];
+        for (int i = 0; i < G.V(); i++) {
+          pre[i] = -1;
+          dis[i] = -1;
+        }
+        bfs(s);
+        for (int e : dis) {
+          System.out.print(e + " ");
+        }
+        System.out.println();
+      }
+
+      private void bfs(int s) {
+        Queue<Integer> queue = new LinkedList<>();
+        queue.add(s);
+        visited[s] = true;
+        pre[s] = s;
+        dis[s] = 0;
+        while (!queue.isEmpty()) {
+          int v = queue.remove();
+          for (int w : G.adj(v)) {
+            if (!visited[w]) {
+              queue.add(w);
+              visited[w] = true;
+              pre[w] = v;
+              dis[w] = dis[v] + 1;
+            }
+          }
+        }
+      }
+
+      public boolean isConnectedTo(int t) {
+        G.validateVertex(t);
+        return visited[t];
+      }
+
+      public Iterable<Integer> path(int t) {
+        ArrayList<Integer> res = new ArrayList<>();
+        if (!isConnectedTo(t)) return res;
+
+        int cur = t;
+        while (cur != s) {
+          res.add(cur);
+          cur = pre[cur];
+        }
+        res.add(s);
+        Collections.reverse(res);
+        return res;
+      }
+
+      public int distance(int t) {
+        G.validateVertex(t);
+        return dis[t];
+      }
+
+      public static void main(String[] args) {
+        Graph g = new Graph("../data/g2.txt");
+        USSSPath ussspath = new USSSPath(g, 0);
+        System.out.println("0 --> 6: " + ussspath.path(6) + " distance: " + ussspath.distance(6));
+        System.out.println("0 --> 5: " + ussspath.path(5) + " distance: " + ussspath.distance(5));
+      }
+    }
 
 Minimum Spanning Tree
 -----------------------------
