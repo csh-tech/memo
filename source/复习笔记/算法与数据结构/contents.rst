@@ -5299,10 +5299,10 @@ CycleDetection
         visited = new boolean[G.V()];
         for (int v = 0; v < G.V(); v++) {
           if (!visited[v]) {
-           if (dfs(v, v)) {
-             hasCycle = true;
-             break;
-           }
+            if (dfs(v, v)) {
+              hasCycle = true;
+              break;
+            }
           }
         }
       }
@@ -5311,9 +5311,9 @@ CycleDetection
         visited[v] = true;
         for (int w : G.adj(v)) {
           if (!visited[w]) {
-           if (dfs(w, v)) return true;
+            if (dfs(w, v)) return true;
           } else if (w != parent) {
-           return true;
+            return true;
           }
         }
         return false;
